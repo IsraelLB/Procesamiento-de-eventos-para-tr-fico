@@ -1,0 +1,2 @@
+select r_v1.ID as Radar_ID,r_v1.matricula as Matricula1,r_v3.matricula as Matricula2,r_v1.fechayhora as FechayHora
+from pattern[every ((every r_v1= RADAR_Velocidad (r_v1.velocidad>60) -> r_v2= RADAR_Velocidad (r_v2.velocidad=0 AND r_v2.matricula=r_v1.matricula AND r_v2.ID=r_v1.ID)) ->(every r_v3= RADAR_Velocidad (r_v3.velocidad>60)->r_v4=RADAR_Velocidad (r_v4.velocidad=0 AND r_v4.matricula=r_v3.matricula AND r_v4.ID=r_v3.ID AND r_v3.ID=r_v1.ID AND r_v4.matricula!=r_v1.matricula)))where timer:within (10 seconds)];

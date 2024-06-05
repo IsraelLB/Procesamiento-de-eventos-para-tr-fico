@@ -1,0 +1,4 @@
+insert into PeligroMeteorologico
+select *
+from Sensor_Meteorologico
+where condiciones_climaticas in ('tormenta', 'nieve','hielo') or  (condiciones_climaticas in ('lluvia', 'niebla') and visibilidad <500) or Velocidad_viento > 100

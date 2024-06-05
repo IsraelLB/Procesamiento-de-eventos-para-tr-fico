@@ -1,0 +1,5 @@
+insert into AlertaHelicopteroMedico
+select 'Solicitud Helicóptero Médico', 'Accidente muy grave causando retención de tráfico en la vía ' || i.ubicacion_incidente as Ubicacion
+from pattern [every (
+    i=Incidente(gravedad = 'muy grave') -> 
+    (timer:interval(30 minutes) and Carga(via = i.ubicacion_incidente and valor > 0.9)))];

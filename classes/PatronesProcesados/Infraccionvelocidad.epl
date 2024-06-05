@@ -1,0 +1,3 @@
+select rv.matricula as Matricula, rv.ID as RadarID, rv.velocidad as Velocidad, rv.velocidad_maxima_via as VelocidadMaximaPermitida, rv.tipo_vehiculo as TipoVehiculo
+from pattern [every rv=RADAR_Velocidad->timer:interval (10 seconds) AND rv2=RADAR_Velocidad((rv2.matricula=rv.matricula)AND (rv2.ID=rv.ID))]
+where (rv.velocidad>rv.velocidad_maxima_via OR rv2.velocidad>rv.velocidad_maxima_via OR (rv.tipo_vehiculo="camion" AND rv.velocidad >90)) AND rv.tipo_vehiculo!="ambulancia";

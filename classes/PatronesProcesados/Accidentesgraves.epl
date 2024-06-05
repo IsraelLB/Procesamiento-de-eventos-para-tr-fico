@@ -1,0 +1,4 @@
+insert into Accidentes_graves
+select tipo_incidente , hora_incidente, fecha_incidente, ubicacion_incidente 
+from Incidente i
+where i.gravedad="grave" OR i.gravedad=" muy grave";

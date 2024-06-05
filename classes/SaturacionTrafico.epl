@@ -1,0 +1,5 @@
+select 'Saturaciontradico',s1.*
+from pattern [every (
+    s1=SENSOR_Trafico(intensidad > intensidad_saturacion) ->
+    (timer:interval(10 minutes) and SENSOR_Trafico(via = s1.via and intensidad > intensidad_saturacion))
+)];

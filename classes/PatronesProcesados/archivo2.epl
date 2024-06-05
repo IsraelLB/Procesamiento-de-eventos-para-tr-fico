@@ -1,0 +1,1 @@
+@public create context ResolucionAccidente start Incidente as I end RADAR_Velocidad(ID=I.ID_radarcercano AND(tipo_vehiculo="ambulancia" OR tipo_vehiculo="grua"));

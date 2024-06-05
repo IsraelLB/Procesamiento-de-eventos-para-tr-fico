@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:imap="http://www.mulesoft.org/schema/mule/imap" xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:ssl="http://www.mulesoft.org/schema/mule/ssl" xmlns:smtps="http://www.mulesoft.org/schema/mule/smtps" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:jersey="http://www.mulesoft.org/schema/mule/jersey" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:amqp="http://www.mulesoft.org/schema/mule/amqp" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/amqp http://www.mulesoft.org/schema/mule/amqp/current/mule-amqp.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/jersey http://www.mulesoft.org/schema/mule/jersey/current/mule-jersey.xsd
+http://www.mulesoft.org/schema/mule/smtp http://www.mulesoft.org/schema/mule/smtp/current/mule-smtp.xsd
+http://www.mulesoft.org/schema/mule/smtps http://www.mulesoft.org/schema/mule/smtps/current/mule-smtps.xsd
+http://www.mulesoft.org/schema/mule/ssl http://www.mulesoft.org/schema/mule/ssl/current/mule-ssl.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/imap http://www.mulesoft.org/schema/mule/imap/current/mule-imap.xsd">
+	<amqp:connector name="AMQP_0_9_Connector" validateConnections="true" doc:name="AMQP-0-9 Connector"/>
+	<vm:endpoint exchange-pattern="one-way" path="ComplexEventConsumerPath" name="ComplexEventConsumerGlobalVM" doc:name="VM"/>
+	<db:mysql-config name="MySQL_Configuration" host="127.0.0.1" port="3306" user="root" password="isi" database="TraficEventReport" doc:name="MySQL Configuration"/>
+	<http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+	<http:request-config name="HTTP_Request_Configuration" host="0.0.0.0" port="8081" doc:name="HTTP Request Configuration"/>
+	<smtp:gmail-connector name="Gmail" validateConnections="true" doc:name="Gmail" contentType="text/html" fromAddress="pruebaisimule@outlook.com" replyToAddresses="pruebaisimule@outlook.com" subject="hola"/>
+	<ssl:endpoint host="smtp.office365.com" port="587" name="SSL__TLS_" responseTimeout="10000" doc:name="SSL (TLS)"/>
+	<imap:connector name="IMAP" validateConnections="true" doc:name="IMAP"/>
+	<file:connector name="File" autoDelete="false" outputAppend="true" streaming="true" validateConnections="true" doc:name="File"/>
+	<file:connector name="multas" autoDelete="false" outputAppend="true" streaming="true" validateConnections="true" doc:name="File"/>
+	<file:connector name="File1" autoDelete="true" streaming="true" validateConnections="true" doc:name="File"/>
+	<flow name="isiFlow">
+		<amqp:inbound-endpoint exchangeName="default" queueName="Mensajes" responseTimeout="10000" exchange-pattern="request-response" connector-ref="AMQP_0_9_Connector" doc:name="AMQP-0-9"/>
+		<byte-array-to-string-transformer doc:name="Byte Array to String"/>
+		<logger message="Mensaje Recibido  #[payload]" level="INFO" doc:name="Logger"/>
+		<component class="esper.SendEventToEsperComponent" doc:name="Java"/>
+	</flow>
+	<flow name="isiFlow1">
+		<file:inbound-endpoint path="C:\Users\ACER\AnypointStudio\workspace\isi\src\main\resources\PatronesSinProcesar" moveToDirectory="C:\Users\ACER\AnypointStudio\workspace\isi\src\main\resources\PatronesProcesados" responseTimeout="10000" doc:name="File" connector-ref="File1"/>
+		<file:file-to-string-transformer doc:name="File to String"/>
+		<component class="esper.AddEventPatternToEsperComponent" doc:name="Java"/>
+	</flow>
+	<flow name="isiFlow2">
+		<vm:inbound-endpoint exchange-pattern="one-way" path="ComplexEventConsumerPath" doc:name="ComplexEventConsumer"/>
+		<logger message="Eventos Complejos #[payload]" level="INFO" doc:name="Logger"/>
+		<scatter-gather doc:name="Scatter-Gather">
+			<processor-chain>
+				<object-to-string-transformer doc:name="Object to String"/>
+				<string-to-byte-array-transformer doc:name="String to Byte Array"/>
+				<amqp:outbound-endpoint exchangeName="outputMule" queueName="OutputMessages" responseTimeout="10000" exchange-pattern="request-response" doc:name="AMQP-0-9"/>
+			</processor-chain>
+			<processor-chain>
+				<object-to-string-transformer doc:name="Object to String"/>
+				<set-payload value="#[payload]" doc:name="Set Payload"/>
+				<db:insert config-ref="MySQL_Configuration" doc:name="Database">
+					<db:parameterized-query><![CDATA[INSERT INTO TraficEvents (traficEvent)
+
+VALUES(#[payload])]]></db:parameterized-query>
+				</db:insert>
+			</processor-chain>
+			<processor-chain>
+				<object-to-string-transformer doc:name="Object to String"/>
+				<http:request config-ref="HTTP_Request_Configuration" path="/Trafic/AddTraficEvent" method="POST" doc:name="HTTP REST Invocation"/>
+			</processor-chain>
+			<processor-chain>
+				<object-to-string-transformer doc:name="Object to String"/>
+				<set-payload value="#[payload+ '\n']" doc:name="Set Payload"/>
+				<choice doc:name="Choice">
+					<when expression="#[message.payload.startsWith('{stmt0_out2={VelocidadMaximaPermitida')]">
+						<file:outbound-endpoint path="C:\Users\ACER\Desktop\ISIdocumentos" outputPattern="Multas" connector-ref="File" responseTimeout="10000" doc:name="Multas"/>
+					</when>
+					<when expression="#[message.payload.startsWith('{stmt0_out2={FechayHora')]">
+						<file:outbound-endpoint path="C:\Users\ACER\Desktop\ISIdocumentos" outputPattern="Accidentes" connector-ref="File" responseTimeout="10000" doc:name="Accidentes"/>
+					</when>
+					<when expression="#[message.payload.startsWith('{AlertaHelicopteroMedico')]">
+						<file:outbound-endpoint path="C:\Users\ACER\Desktop\ISIdocumentos" outputPattern="AlertaHelicoptero" connector-ref="File" responseTimeout="10000" doc:name="AlertaHelicoptero"/>
+					</when>
+					<otherwise>
+						<file:outbound-endpoint path="C:\Users\ACER\Desktop\ISIdocumentos" outputPattern="EventosComplejos" connector-ref="File" responseTimeout="10000" doc:name="File"/>
+					</otherwise>
+				</choice>
+			</processor-chain>
+		</scatter-gather>
+	</flow>
+	<flow name="isiFlow3">
+		<http:listener config-ref="HTTP_Listener_Configuration" path="/*" doc:name="HTTP"/>
+		<jersey:resources doc:name="REST">
+			<component class="rest_isi.Trafic"/>
+		</jersey:resources>
+	</flow>
+</mule>

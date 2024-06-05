@@ -1,0 +1,2 @@
+select r_v1.ID as Radar_ID,r_v1.matricula as Matricula, r_v1.fechayhora as FechayHora
+from pattern [every r_v1= RADAR_Velocidad (r_v1.velocidad>60) -> r_v2= RADAR_Velocidad (r_v2.velocidad=0 AND r_v2.matricula=r_v1.matricula AND r_v2.ID=r_v1.ID) where timer:within (5 seconds)];

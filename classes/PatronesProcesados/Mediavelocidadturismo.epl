@@ -1,0 +1,3 @@
+select avg(rv.velocidad)
+from RADAR_Velocidad.win:length_batch(20) rv
+where rv.tipo_vehiculo="turismo";

@@ -1,0 +1,11 @@
+insert into AlertaTrafico
+select s.via, 
+       c.valor as carga,
+       case 
+           when c.valor > 0.9 then 'Retención'
+           when c.valor > 0.7 then 'Tráfico Alto'
+           when c.valor > 0.5 then 'Tráfico Moderado'
+           else null
+       end as tipo_alerta
+from SENSOR_Trafico.win:time(1 hour) s, Carga.win:time(1 hour) c
+where s.via = c.via and c.valor > 0.5;

@@ -1,0 +1,5 @@
+context ResolucionAccidente
+select  avg(r_v.velocidad) as Media_Velocidad
+from RADAR_Velocidad r_v
+where context.I.ID_radarcercano=r_v.ID
+output snapshot when terminated;

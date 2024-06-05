@@ -1,0 +1,33 @@
+@public @buseventtype create json schema 
+RADAR_Velocidad as (eventTypeName String,ID int,matricula string,velocidad int,tipo_vehiculo string,velocidad_maxima_via int);
+@public @buseventtype create json schema 
+Accidentes_graves as(tipo_incidente string,hora_incidente string,fecha_incidente string,ubicacion_incidente string);
+@public @buseventtype create json schema
+Incidente as (eventTypeName String,tipo_incidente string,hora_incidente string,fecha_incidente string,ubicacion_incidente string,ID_radarcercano int,gravedad string);
+@public create context ResolucionAccidente start Incidente as I end RADAR_Velocidad(ID=I.ID_radarcercano AND(tipo_vehiculo="ambulancia" OR tipo_vehiculo="grua"));
+@public @buseventtype create json schema SENSOR_Trafico (
+    ID int,
+    via string,
+    intensidad int,
+    intensidad_saturacion int,
+    ocupacion int,
+    coeficiente_carga int
+);
+
+@public @buseventtype create json schema Carga (
+    valor double,
+    via string
+);
+
+@public @buseventtype create json schema AlertaTrafico(
+	via string,
+	carga double,
+	Descripcion string
+);
+
+@public @buseventtype create json schema Sensor_Meteorologico (
+    Temperatura int,
+    Velocidad_viento int,
+    condiciones_climaticas string,
+    visibilidad int
+);
